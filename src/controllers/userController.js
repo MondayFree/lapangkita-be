@@ -44,7 +44,25 @@ const userController = {
 
     async register(req, res, next) {
         try {
-            
+            const {nama_depan, nama_belakang, email, password} = req.body
+            if(!nama_depan || !nama_belakang || !email || !password) {
+                return ResponseAPI.error(res, 'Input is invalid', 400);
+            }
+            const existingUser = await User.findOne({email})
+            if(existingUser){
+                return ResponseAPI.error(res, 'User is already registered', 400);
+            }
+            const user = await User.create({
+                first_name: nama_depan, 
+                last_name: nama_belakang, 
+                email, 
+                password
+            })
+            return ResponseAPI.success(res, {
+                nama_depan: user.first_name,
+                nama_belakang: user.last_name,
+                email: user.email
+            });
         } catch (error) {
             next(error)
         }
@@ -60,7 +78,29 @@ const userController = {
     
     async getDetailUser(req, res, next) {
         try {
-           
+            const id = req.params.id.trim()
+            if(id.length < 12) {
+                return ResponseAPI.error(res, "ID is not valid", 400)
+            }
+            const user = await User.findById(id)
+            if(!user) {
+                return ResponseAPI.notFound(res)
+            }
+            ResponseAPI.success(res, {
+                id: user._id,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                image_url: user.img_url,
+                phone_number: user.phone_number,
+                gender: user.gender.toLowerCase(),
+                birth_date: user.birth_date,
+                address: {
+                    province: user.province,
+                    kabupaten: user.kabupaten,
+                    kecamatan: user.kecamatan
+                }
+            })
         } catch (error) {
             next(error);
         }
