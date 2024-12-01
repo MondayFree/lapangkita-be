@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const ResponseAPI = require('../utils/response');
 const { jwtSecret, jwtExpiresIn } = require('../config/env');
+const imageUpload = require('../utils/img');
 
 const generateToken = user => {
     const jwtPayload = {
@@ -67,7 +68,11 @@ const userController = {
 
     async updateUser(req, res, next) {
         try {
-            
+
+            // contoh kode upload gambar
+            const uploadedImgUrl = await imageUpload(file)
+            console.log(uploadedImgUrl); // berisi url gambar yang sudah diupload
+    
         } catch (error) {
             next(error);
         }
