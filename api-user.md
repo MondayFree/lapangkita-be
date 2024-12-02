@@ -137,15 +137,13 @@ Request body :
 {
   "first_name": "john",
   "last_name": "doe",
-  "image": "file",
+  "photo": "file",
   "phone_number": "1234567i",
-  "gender": "laki-laki",
+  "gender": "pria",
   "birth_date": "26 November 2024",
-  "address": {
-    "province": "kalimantan selatan",
-    "kabupaten": "banjar",
-    "kecamatan": "pandan sari"
-  }
+  "province": "kalimantan selatan",
+  "kabupaten": "banjar",
+  "kecamatan": "pandan sari"
 }
 ```
 
@@ -162,11 +160,9 @@ Response success :
     "phone_number": "1234567i",
     "gender": "laki-laki",
     "birth_date": "26 November 2024",
-    "address": {
-      "province": "kalimantan selatan",
-      "kabupaten": "banjar",
-      "kecamatan": "pandan sari"
-    }
+    "province": "kalimantan selatan",
+    "kabupaten": "banjar",
+    "kecamatan": "pandan sari"
   }
 }
 ```
@@ -227,19 +223,28 @@ Enpoint : GET /api/users
 Header :
 - authorization: token
 
+Params :
+- name?
+- page
+- limit
+
 Response success :
 ```json
 {
   "success": true,
   "message": "success",
-  "data": [
-    {
-      "id": "jifowejf",
-      "first_name": "samsul",
-      "last_name": "samsudin"
-    },
-    ...
-  ]
+  "data": {
+    "limit": 10,
+    "page": 2,
+    "user": [
+      {
+        "id": "jifowejf",
+        "first_name": "samsul",
+        "last_name": "samsudin"
+      },
+      ...
+    ]
+  }
   
 }
 ```

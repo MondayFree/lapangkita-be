@@ -93,10 +93,74 @@ Request body :
 {
   "nama": "Lapang B",
   "img": [image1, image2, image3],
+  "delete_img": [0, 1, 2],
   "harga": 100000,
   "lokasi:": "outdoor",
   "jenis_lantai": "vinyl",
   "fasilitas": ["bangku", "jaring", "scoring board"]
+}
+```
+
+Response success :
+```json
+{
+  "success": false,
+  "message": "berhasil",
+  "data": {
+    "nama": "Lapang B",
+    "img": [image1, image2, image3],
+    "harga": 100000,
+    "lokasi:": "outdoor",
+    "jenis_lantai": "vinyl",
+    "fasilitas": ["bangku", "jaring", "scoring board"]
+  }
+}
+```
+
+Response error :
+```json
+{
+  "success": false,
+  "message": "gagal",
+  "data": {}
+}
+```
+<br/><hr/><br/>
+
+## Add Field
+Role: ADMIN
+
+Enpoint : POST /api/fields
+
+Header :
+- authorization: token
+- content-type: form-data
+
+Request body :
+```json
+{
+  "nama": "Lapang B",
+  "img": [image1, image2, image3],
+  "harga": 100000,
+  "lokasi:": "outdoor",
+  "jenis_lantai": "vinyl",
+  "fasilitas": ["bangku", "jaring", "scoring board"]
+}
+```
+
+Response success :
+```json
+{
+  "success": false,
+  "message": "berhasil",
+  "data": {
+    "nama": "Lapang B",
+    "img": [image1, image2, image3],
+    "harga": 100000,
+    "lokasi:": "outdoor",
+    "jenis_lantai": "vinyl",
+    "fasilitas": ["bangku", "jaring", "scoring board"]
+  }
 }
 ```
 
