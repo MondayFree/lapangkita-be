@@ -15,9 +15,9 @@ Request body :
 ```json
 {
   "id_lapang": "jiewo",
-  "tanggal": "29 November 2024",
-  "jam": "20-21",
-  "metode_pembayaran": "bayar_ditempat"
+  "tanggal": "29-11-2024",
+  "jam": "20",
+  "metode_pembayaran": "bayar_lokasi"
 }
 ```
 
