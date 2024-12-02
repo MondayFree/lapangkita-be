@@ -108,11 +108,49 @@ const userController = {
 
     async updateUser(req, res, next) {
         try {
-
-            // contoh kode upload gambar
-            const uploadedImgUrl = await imageUpload(file)
-            console.log(uploadedImgUrl); // berisi url gambar yang sudah diupload
-    
+            const id = req.params.id.trim()
+            if(id.length < 12) {
+                return ResponseAPI.error(res, "ID is not valid", 400)
+            }
+            const newData = {}
+            for(const prop in req.body) {
+                switch(prop) {
+                    case 'first_name' :
+                    case 'last_name' :
+                    case 'gender' :
+                    case 'phone_number' :
+                    case 'birth_date' :
+                    case 'province' :
+                    case 'kabupaten' :
+                    case 'kecamatan' :
+                        newData[prop] = req.body[prop]
+                }
+            }
+            if(newData.gender) newData.gender = newData.gender.toUpperCase()
+            const user = await User.findById(id)
+            if(!user) {
+                return ResponseAPI.notFound(res, "User doesn't exist")
+            }
+            if(req.file) {
+                uploadedImgUrl = await imageUpload(req.file)
+                newData.img_url = uploadedImgUrl
+            }
+            for(const prop in newData) {
+                user[prop] = newData[prop]
+            }
+            await user.save()
+            ResponseAPI.success(res, {
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                img_url: user.img_url,
+                phone_number: user.phone_number,
+                gender: user.gender,
+                birth_date: user.birth_date,
+                province: user.province,
+                kabupaten: user.kabupaten,
+                kecamatan: user.kecamatan
+            })
         } catch (error) {
             next(error);
         }
