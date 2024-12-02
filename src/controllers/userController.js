@@ -70,7 +70,34 @@ const userController = {
 
     async getAllUser(req, res, next) {
         try {
-            
+            let {page, limit} = req.query
+            if(!page || !limit) {
+                return ResponseAPI.error(res, "Param is not valid", 400)
+            }
+            page = Number(page)
+            limit = Number(limit)
+            if(!page || !limit) {
+                return ResponseAPI.error(res, "Param value is not valid", 400)
+            }
+            let filter = {}
+            const name = req.query.name
+            if(name) {
+                filter = {
+                    $or: [
+                        {first_name: new RegExp(name, "i")},
+                        {last_name: new RegExp(name, "i")}
+                    ]
+                }
+            }
+            const result = await User.find(filter)
+                .limit(limit)
+                .skip(limit * (page - 1))
+                .select("first_name last_name")
+            ResponseAPI.success(res, {
+                limit,
+                page,
+                user: result
+            })
         } catch (error) {
             next(error)
         }
@@ -158,7 +185,26 @@ const userController = {
     
     async updatePassword(req, res, next) {
         try {
-            
+            const id = req.params.id.trim()
+            if(id.length < 12) {
+                return ResponseAPI.error(res, "ID is not valid", 400)
+            }
+            const {newPassword, oldPassword} = req.body
+            if(!newPassword || !oldPassword) {
+                return ResponseAPI.error(res, 'Input is not valid', 400)
+            }
+            const user = await User.findById(id)
+            if(!user) {
+                return ResponseAPI.notFound(res, 'User is not found')
+            }
+            const result = await user.comparePassword(oldPassword)
+            if(result) {
+                user.password = newPassword
+                await user.save()
+                return ResponseAPI.success(res, {}, "Berhasil")
+            } else {
+                return ResponseAPI.error(res, "Password is wrong", 401)
+            }
         } catch (error) {
             next(error);
         }
