@@ -58,10 +58,10 @@ Header :
 
 Params :
 - status?: active/passed
-- field?: field_id
+- field_id?: field_id
 - order?: asc/desc
-- page?: 3
-- limit?: 10
+- page: 3
+- limit: 10
 
 Response success : 
 ```json
@@ -74,7 +74,7 @@ Response success :
       "status": "active",
       "field_name": "lapang a",
       "date": "19 November 2024",
-      "time": "14-15",
+      "time": "14",
       "field_img_url": "https://gambar.com/jifw"
     },
     {
@@ -82,7 +82,7 @@ Response success :
       "status": "active",
       "field_name": "lapang a",
       "date": "19 November 2024",
-      "time": "14-15",
+      "time": "14",
       "field_img_url": "https://gambar.com/jifw"
     },
     ...
@@ -152,12 +152,10 @@ Header :
 - authorization: token
 
 Params :
-- play_date?
-- create_date?
 - status?
 - payment_method?
-- page?
-- limit?
+- page
+- limit
 
 Response success :
 ```json

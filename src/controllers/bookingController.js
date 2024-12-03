@@ -1,5 +1,6 @@
 const Booking = require('../models/Booking');
 const ResponseAPI = require('../utils/response');
+const { DateTime } = require("luxon");
 
 const bookingController = {
   async addBooking(req, res, next) {
@@ -56,7 +57,83 @@ const bookingController = {
  
   async getUserBooking(req, res, next) {
     try {
-            
+      // validasi param user id
+      const {id} = req.params
+      if(id.length < 12) {
+        return ResponseAPI.error(res, 'User id not valid')
+      }
+
+      // validsi param lain
+      let {page, limit, status, field_id, order} = req.query
+      if(!page || !limit) {
+          return ResponseAPI.error(res, "Pagination is not valid", 400)
+      }
+      page = Number(page)
+      limit = Number(limit)
+      if(!page || !limit) {
+          return ResponseAPI.error(res, "Pagination value is not valid", 400)
+      }
+      if(status) {
+        if(!(status === 'active' || status === 'passed')) {
+          return ResponseAPI.error(res, 'User status not valid')
+        }
+      }
+      if(field_id) {
+        if(field_id.length < 12) {
+          return ResponseAPI.error(res, 'Field ID not valid')
+        }
+      }
+      if(order) {
+        if(!(order === 'asc' || order === 'desc')) {
+          return ResponseAPI.error(res, 'Order is not valid')
+        }
+      }
+
+      // get data from db
+      const filter = {
+        user_id: id
+      }
+      if(status) {
+        const now = DateTime.now().setZone("Asia/Jakarta");
+        const operator = status === 'active' ? '$gte' : '$lte'
+        filter.play_time = {
+          [operator]: now
+        }
+      }
+      if(field_id) {
+        filter.field_id = field_id
+      }
+      const result = await Booking.find(filter)
+        .limit(limit)
+        .skip(limit * (page - 1))
+        .sort({
+          booking_time: order ? order === 'asc' ? 1 : -1 : -1
+        })
+        .populate('field_id', 'name img_url')
+        
+      // response
+      const parsedResult = result.map(el => {
+        const now = DateTime.now().setZone("Asia/Jakarta");
+        const playTime = new Date(el.play_time)
+        const bookingStatus = playTime.getTime() > now.toMillis() ? 'active' : 'passed'
+        const booking = {
+          id: el._id,
+          status: bookingStatus,
+          play_time: el.play_time,
+          field: {
+            id: el.field_id._id,
+            name: el.field_id.name,
+            img_url: el.field_id.img_url 
+          } 
+        }
+
+        if(status) {
+          return (bookingStatus === status) ? booking : null
+        } else {
+          return booking
+        }
+      })
+      return ResponseAPI.success(res, parsedResult)
     } catch (error) {
         next(error);
     }
