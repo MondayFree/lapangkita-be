@@ -57,7 +57,7 @@ Header :
 - authorization: token
 
 Params :
-- status?: active/passed
+- status?: active/passed/pending
 - field_id?: field_id
 - order?: asc/desc
 - page: 3
@@ -72,18 +72,30 @@ Response success :
     {
       "id": "jifwofwo",
       "status": "active",
-      "field_name": "lapang a",
-      "date": "19 November 2024",
-      "time": "14",
-      "field_img_url": "https://gambar.com/jifw"
+      "play_time": "date",
+      "field": {
+        "id": "jifowjf",
+        "name": "Lapang B",
+        "img_url": [
+          "https://gamba",
+          "https://gamba",
+          "https://gamba",
+        ]
+      }
     },
     {
       "id": "jifwofwo",
       "status": "active",
-      "field_name": "lapang a",
-      "date": "19 November 2024",
-      "time": "14",
-      "field_img_url": "https://gambar.com/jifw"
+      "play_time": "date",
+      "field": {
+        "id": "jifowjf",
+        "name": "Lapang B",
+        "img_url": [
+          "https://gamba",
+          "https://gamba",
+          "https://gamba",
+        ]
+      }
     },
     ...
   ]
@@ -118,8 +130,7 @@ Response success :
     "id": "jiowrwo",
     "status": "active",
     "booking_date": "17 November 2024",
-    "play_date": "20 November 2024",
-    "play_time": "09-10 WIB",
+    "play_time": "date time",
     "field": {
       "id": "jifow",
       "nama": "lapang a",
@@ -152,10 +163,9 @@ Header :
 - authorization: token
 
 Params :
-- status?
-- payment_method?
-- page
-- limit
+- status?: active/passed/pending
+- page: 2
+- limit: 3
 
 Response success :
 ```json
@@ -167,11 +177,16 @@ Response success :
       "id": "jifwofwo",
       "customer_id": "jifow",
       "status": "active",
-      "field_name": "lapang a",
-      "booking_date": "14 November 2024"
-      "date": "19 November 2024",
-      "time": "14-15",
-      "field_img_url": "https://gambar.com/jifw"
+      "booking_date": "14 November 2024",
+      "play_time": "date time",
+      "field": {
+        "name": "lapang",
+        "img_url": [
+          "https://gambar.com/jifw",
+          "https://gambar.com/jifw",
+          "https://gambar.com/jifw",
+        ]
+      }
     },
     ...
   ]
@@ -197,13 +212,6 @@ Enpoint : PATCH /api/bookings/:id/status
 Header :
 - authorization: token
 - content-type: application/json
-
-Request body :
-```json
-{
-  "status": "active"
-}
-```
 
 Response success :
 ```json

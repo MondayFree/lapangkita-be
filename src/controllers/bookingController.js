@@ -49,7 +49,73 @@ const bookingController = {
   
   async getAllBooking(req, res, next) {
     try {
-            
+        // validasi param
+        let {page, limit, status} = req.query
+        if(!page || !limit) {
+          return ResponseAPI.error(res, "Pagination is not valid", 400)
+        }
+        page = Number(page)
+        limit = Number(limit)
+        if(!page || !limit) {
+          return ResponseAPI.error(res, "Pagination value is not valid", 400)
+        }
+        if(status) {
+          if(status !== 'active' && status !== 'passed' && status !== 'pending') {
+            return ResponseAPI.error(res, "Status value is not valid", 400)
+          }
+        }
+
+        // get data from db
+        const filter = {}
+
+        if(status) {
+          const now = DateTime.now().setZone("Asia/Jakarta");
+          let operator = '$lte'
+          if(status === 'active') {
+            filter.payment_status = 'COMPLETED'
+            operator = '$gte'
+          } else if(status === 'pending') {
+            operator = '$gte'
+            filter.payment_status = 'PENDING'
+          }
+          filter.play_time = {
+            [operator]: now
+          }
+        }
+
+        const result = await Booking.find(filter)
+          .limit(limit)
+          .skip(limit * (page -1))
+          .populate('field_id', 'name img_url')
+
+        // response
+        const response = result.map(el => {
+          const now = DateTime.now().setZone("Asia/Jakarta");
+          const playTime = new Date(el.play_time)
+
+          let bookingStatus = playTime.getTime() > now.toMillis() ? 'active' : 'passed'
+          if(el.payment_status === 'PENDING' && bookingStatus === 'active') {
+            bookingStatus = 'pending'
+          }
+
+          const booking = {
+            id: el._id,
+            customer_id: el.user_id,
+            status: bookingStatus,
+            booking_date: el.booking_time,
+            play_time: el.play_time,
+            field: {
+              name: el.field_id.name,
+              img_url: el.field_id.img_url,
+            }
+          }
+          return booking
+        })
+        return ResponseAPI.success(res, {
+          page,
+          limit,
+          data: response
+        })
     } catch (error) {
         next(error);
     }
@@ -74,7 +140,7 @@ const bookingController = {
           return ResponseAPI.error(res, "Pagination value is not valid", 400)
       }
       if(status) {
-        if(!(status === 'active' || status === 'passed')) {
+        if(!(status === 'active' || status === 'passed' || status === 'pending')) {
           return ResponseAPI.error(res, 'User status not valid')
         }
       }
@@ -94,8 +160,16 @@ const bookingController = {
         user_id: id
       }
       if(status) {
+        // 
         const now = DateTime.now().setZone("Asia/Jakarta");
-        const operator = status === 'active' ? '$gte' : '$lte'
+        let operator = '$lte'
+        if(status === 'active') {
+          filter.payment_status = 'COMPLETED'
+          operator = '$gte'
+        } else if(status === 'pending') {
+          operator = '$gte'
+          filter.payment_status = 'PENDING'
+        }
         filter.play_time = {
           [operator]: now
         }
@@ -115,7 +189,11 @@ const bookingController = {
       const parsedResult = result.map(el => {
         const now = DateTime.now().setZone("Asia/Jakarta");
         const playTime = new Date(el.play_time)
-        const bookingStatus = playTime.getTime() > now.toMillis() ? 'active' : 'passed'
+        let bookingStatus = playTime.getTime() > now.toMillis() ? 'active' : 'passed'
+        if(el.payment_status === 'PENDING' && bookingStatus === 'active') {
+          bookingStatus = 'pending'
+        }
+
         const booking = {
           id: el._id,
           status: bookingStatus,
@@ -127,11 +205,7 @@ const bookingController = {
           } 
         }
 
-        if(status) {
-          return (bookingStatus === status) ? booking : null
-        } else {
-          return booking
-        }
+        return booking
       })
       return ResponseAPI.success(res, parsedResult)
     } catch (error) {
@@ -141,7 +215,44 @@ const bookingController = {
   
   async getDetailBooking(req, res, next) {
     try {
-            
+        // validasi param id
+        const {id} = req.params;
+        if(id.length < 12) {
+          return ResponseAPI.error(res, "Booking is not valid")
+        }
+
+        // get data
+        const result = await Booking.findById(id)
+          .populate('field_id', '_id name location img_url price')
+
+        if(!result) {
+          return ResponseAPI.error(res, 'Booking is not found', 404)
+        }
+
+        const now = DateTime.now().setZone("Asia/Jakarta");
+        const playTime = new Date(result.play_time)
+        let bookingStatus = (playTime.getTime() > now.toMillis()) ? 'active' : 'passed'
+        if(result.payment_status === 'PENDING' && bookingStatus === 'active') {
+          bookingStatus = 'pending'
+        }
+
+        const response = {
+          id: result._id,
+          status: bookingStatus,
+          booking_date: result.booking_time,
+          play_time: result.play_time,
+          payment_method: result.payment_method,
+          field: {
+            id: result.field_id._id,
+            nama: result.field_id.name,
+            lokasi: result.field_id.location,
+            img_url: result.field_id.img_url,
+            id: result.field_id._id,
+          }
+        }
+
+        // response
+      return ResponseAPI.success(res, response)
     } catch (error) {
         next(error);
     }
@@ -149,7 +260,17 @@ const bookingController = {
   
   async updateStatusBooking(req, res, next) {
     try {
-            
+      const {id} = req.params
+      if(id.length < 12) {
+        return ResponseAPI.error(res, 'ID is not valid', 400)
+      }
+      const booking = await Booking.findById(id)
+      if(!booking) {
+        return ResponseAPI.notFound(res, 'Booking is not found')
+      }
+      booking.payment_status = 'COMPLETED'
+      await booking.save()
+      return ResponseAPI.success(res, "Update booking berhasil")
     } catch (error) {
         next(error);
     }
