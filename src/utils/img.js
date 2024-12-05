@@ -11,5 +11,4 @@ const imageUpload = async (reqFile) => {
     throw new Error(err.message)
   }
 }
-
 module.exports = imageUpload
