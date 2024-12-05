@@ -28,7 +28,6 @@ const fieldController = {
         message: "Berhasil mendapatkan list lapang",
         data: responseData
       });
-
     } catch (error) {
       console.error(error);
       return res.status(500).json({
@@ -38,7 +37,6 @@ const fieldController = {
       });
     }
   },
-
   
   async getDetailField(req, res, next) {
     try {
@@ -68,7 +66,6 @@ const fieldController = {
         message: "Berhasil mendapatkan detail lapangan",
         data: responseData
       });
-
     } catch (error) {
       console.error(error);
       return res.status(500).json({
@@ -79,7 +76,6 @@ const fieldController = {
     }
   },
 
- 
   async updateField(req, res, next) {
     try {
       const { id } = req.params;
@@ -94,49 +90,44 @@ const fieldController = {
           data: {}
         });
       }
-  
-      if (!Array.isArray(field.img)) {
-        field.img = [];
+
+      if(delete_img) {
+        field.img_url = field.img_url.filter((e, idx) => !delete_img.includes(idx))
       }
-  
-      let uploadedImageUrls = [];
-      if (newImages && newImages.length > 0) {
-        uploadedImageUrls = await imageUpload(newImages);
-      }
-  
-      if (delete_img && Array.isArray(delete_img)) {
-        for (let idx of delete_img) {
-          const imgUrl = field.img[idx];
-          if (imgUrl) {
-            const publicId = imgUrl.split('/').pop().split('.')[0]; 
-          }
+
+      if(newImages && newImages.length !== 0) {
+        const uploadImgUrl = []
+        for(const img of newImages) {
+          const url = await imageUpload(img)
+          uploadImgUrl.push(url)
         }
-  
-        field.img = field.img.filter((_, idx) => !delete_img.includes(idx));
+        field.img_url = [...field.img_url, ...uploadImgUrl]
       }
-  
-      field.nama = nama || field.nama;
-      field.harga = harga || field.harga;
-      field.lokasi = lokasi || field.lokasi;
-      field.jenis_lantai = jenis_lantai || field.jenis_lantai;
-      field.fasilitas = fasilitas || field.fasilitas;
-      field.img = [...field.img, ...uploadedImageUrls];
-  
+
+      let newFacility = field.facility
+      if(fasilitas) {
+        newFacility = fasilitas.split(",").map(e => e.trim())
+      }
+      field.name = nama || field.name;
+      field.price = harga || field.price;
+      field.location = lokasi || field.location;
+      field.floor_type = jenis_lantai || field.floor_type;
+      field.facility = newFacility
+
       await field.save();
   
       return res.status(200).json({
         success: true,
         message: "Berhasil memperbarui field",
         data: {
-          nama: field.nama,
-          img: field.img,
-          harga: field.harga,
-          lokasi: field.lokasi,
-          jenis_lantai: field.jenis_lantai,
-          fasilitas: field.fasilitas
+          nama: field.name,
+          img: field.img_url,
+          harga: field.price,
+          lokasi: field.location,
+          jenis_lantai: field.floor_type,
+          fasilitas: field.facility
         }
       });
-  
     } catch (error) {
       console.error(error);
       return res.status(500).json({
@@ -149,18 +140,22 @@ const fieldController = {
   
   async addField(req, res, next) {
     try {
+      // validasi
       const { nama, harga, lokasi, jenis_lantai, fasilitas } = req.body;  
       const newImages = req.files;  
-      if (!nama || !harga || !lokasi || !jenis_lantai || !fasilitas) {
+      if (!nama || !harga || !lokasi || !jenis_lantai || !fasilitas || !newImages) {
         return res.status(400).json({
           success: false,
           message: "Semua field harus diisi.",
           data: {}
         });
       }
-  
-      const parsedFasilitas = Array.isArray(fasilitas) ? fasilitas : [fasilitas];
-  
+      if(newImages.length === 0) {
+        return ResponseAPI.error(res, 'Photo harus diisi')
+      }
+
+      // parse
+      const parsedFasilitas = fasilitas.split(",").map(e => e.trim())
       const parsedHarga = parseFloat(harga); 
       if (isNaN(parsedHarga)) {
         return res.status(400).json({
@@ -169,28 +164,25 @@ const fieldController = {
           data: {}
         });
       }
-  
-      let uploadedImageUrls = [];
-      if (Array.isArray(newImages)) {
-        uploadedImageUrls = await Promise.all(newImages.map(async (file) => {
-          const uploadedUrl = await imageUpload(file);  
-          return uploadedUrl;  
-        }));
-      } else if (newImages) {
-        uploadedImageUrls.push(await imageUpload(newImages));
+
+      // upload
+      const uploadImgUrl = []
+      for(const img of newImages) {
+        const url = await imageUpload(img)
+        uploadImgUrl.push(url)
       }
-  
-      const newField = new Field({
+      
+      // add field
+      const newField = await Field.create({
         name: nama,
         price: parsedHarga, 
         location: lokasi, 
         floor_type: jenis_lantai, 
         facility: parsedFasilitas,  
-        img_url: uploadedImageUrls,  
+        img_url: uploadImgUrl,  
       });
-
-      await newField.save();
-  
+      
+      // response
       return res.status(201).json({
         success: true,
         message: "Field berhasil ditambahkan.",
@@ -198,12 +190,11 @@ const fieldController = {
           nama: newField.name,
           img: newField.img_url,
           harga: newField.price,
-          locasi: newField.location,
+          lokasi: newField.location,
           jenis_lantai: newField.floor_type,
           fasilitas: newField.facility
         }
       });
-  
     } catch (error) {
       console.error(error);
       return res.status(500).json({

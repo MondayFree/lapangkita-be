@@ -92,7 +92,7 @@ Request body :
 ```json
 {
   "nama": "Lapang B",
-  "img": [image1, image2, image3],
+  "photo": [image1, image2, image3],
   "delete_img": [0, 1, 2],
   "harga": 100000,
   "lokasi:": "outdoor",
@@ -140,7 +140,7 @@ Request body :
 ```json
 {
   "nama": "Lapang B",
-  "img": [image1, image2, image3],
+  "photo": [image1, image2, image3],
   "harga": 100000,
   "lokasi:": "outdoor",
   "jenis_lantai": "vinyl",
