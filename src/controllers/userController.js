@@ -33,7 +33,7 @@ const userController = {
                     id: user._id,
                     name: user.name,
                     email: user.email,
-                    photo_url: user.photo_url,
+                    photo_url: user.img_url,
                     role: user.role
                 }
             });
