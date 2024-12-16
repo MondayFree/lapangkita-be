@@ -230,3 +230,50 @@ Response error :
   "data": {}
 }
 ```
+
+<hr />
+
+## Get Schedule
+Role: ADMIN | CUSTOMER
+
+Enpoint : GET /api/bookings/schedule
+
+Header :
+- authorization: token
+
+Params : 
+- date: ISO Date
+- field_id: string
+
+
+Response success :
+```json
+{
+  "success": true,
+  "message": "gagal",
+  "data": [
+    {
+      "hour": 8,
+      "booked": false
+    },
+    {
+      "hour": 9,
+      "booked": false
+    },
+    {
+      "hour": 10,
+      "booked": true
+    },
+    ...
+  ]
+}
+```
+
+Response error :
+```json
+{
+  "success": false,
+  "message": "gagal",
+  "data": {}
+}
+```
