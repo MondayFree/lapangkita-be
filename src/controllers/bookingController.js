@@ -23,7 +23,8 @@ const bookingController = {
       tanggal = tanggal.split('-')
       const jadwal = new Date(Date.UTC(tanggal[2], tanggal[1] - 1, tanggal[0], jam))
       const existingSchedule = await Booking.findOne({
-        play_time: jadwal
+        play_time: jadwal,
+        field_id: id_lapang
       })
       if(existingSchedule) {
         return ResponseAPI.error(res, 'Booking already exists')
@@ -87,6 +88,20 @@ const bookingController = {
           .limit(limit)
           .skip(limit * (page -1))
           .populate('field_id', 'name img_url')
+          .populate('user_id', "first_name _id img_url")
+          .sort({ play_time: -1 })
+
+        // pagination
+        const totalDocuments = await Booking.countDocuments(filter);
+        let totalPage
+        if(totalDocuments > limit) {
+          totalPage = totalDocuments / limit
+          if((totalPage - Math.floor(totalPage)) > 0) {
+            totalPage = Math.ceil(totalPage)
+          }
+        } else {
+          totalPage = 1
+        }
 
         // response
         const response = result.map(el => {
@@ -100,7 +115,11 @@ const bookingController = {
 
           const booking = {
             id: el._id,
-            customer_id: el.user_id,
+            customer: {
+              id: el.user_id._id,
+              name: el.user_id.first_name,
+              imgUrl: el.user_id.img_url
+            },
             status: bookingStatus,
             booking_date: el.booking_time,
             play_time: el.play_time,
@@ -113,6 +132,7 @@ const bookingController = {
         })
         return ResponseAPI.success(res, {
           page,
+          totalPage,
           limit,
           data: response
         })
@@ -181,10 +201,22 @@ const bookingController = {
         .limit(limit)
         .skip(limit * (page - 1))
         .sort({
-          booking_time: order ? order === 'asc' ? 1 : -1 : -1
+          play_time: order ? order === 'asc' ? 1 : -1 : -1
         })
         .populate('field_id', 'name img_url')
         
+      // pagination
+      const totalDocuments = await Booking.countDocuments(filter);
+      let totalPage
+      if(totalDocuments > limit) {
+        totalPage = totalDocuments / limit
+        if((totalPage - Math.floor(totalPage)) > 0) {
+          totalPage = Math.ceil(totalPage)
+        }
+      } else {
+        totalPage = 1
+      }
+
       // response
       const parsedResult = result.map(el => {
         const now = DateTime.now().setZone("Asia/Jakarta");
@@ -207,7 +239,11 @@ const bookingController = {
 
         return booking
       })
-      return ResponseAPI.success(res, parsedResult)
+      return ResponseAPI.success(res, {
+        totalPage: totalPage,
+        currentPage: page,
+        data: parsedResult
+      })
     } catch (error) {
         next(error);
     }
@@ -224,6 +260,7 @@ const bookingController = {
         // get data
         const result = await Booking.findById(id)
           .populate('field_id', '_id name location img_url price')
+          .populate("user_id", "_id first_name img_url")
 
         if(!result) {
           return ResponseAPI.error(res, 'Booking is not found', 404)
@@ -247,7 +284,11 @@ const bookingController = {
             nama: result.field_id.name,
             lokasi: result.field_id.location,
             img_url: result.field_id.img_url,
-            id: result.field_id._id,
+            price: result.field_id.price,
+          },
+          customer: {
+            name: result.user_id.first_name,
+            imgUrl: result.user_id.img_url,
           }
         }
 
@@ -275,6 +316,52 @@ const bookingController = {
         next(error);
     }
   },
+
+  async getScheduleBooking(req, res, next) {
+    try {
+      // validasi param 
+      const {date, field_id} = req.query
+      if(!date || !field_id) {
+        return ResponseAPI.error(res, "required param is not provided", 400)
+      }
+      const dateObject = new Date(date);
+      if(isNaN(dateObject.getTime()) || date !== dateObject.toISOString()) {
+        return ResponseAPI.error(res, "date param is not ISO format", 400)
+      }
+      if(field_id.length < 24) {
+        return ResponseAPI.error(res, "field id is not vaid", 400)
+      }
+
+      // request booking
+      const start = new Date(Date.UTC(dateObject.getFullYear(), dateObject.getMonth(), dateObject.getDate()))
+      const end = new Date(start.toISOString())
+      end.setDate(start.getDate() + 1)
+      const result = await Booking.find({
+        field_id: field_id,
+        play_time: {
+          $gte: start,
+          $lt: end
+        }
+      }).select("play_time")
+
+      // parsing booking
+      const bookedHour = result.map(e => {
+        return (new Date(e.play_time)).getUTCHours()
+      })
+      const response = []
+      for(let i = 8; i <= 22; i++) {
+        response.push({
+          hour: i,
+          booked: bookedHour.includes(i)
+        })
+      }
+
+      // response
+      ResponseAPI.success(res, response)
+    } catch(error) {
+      next(error)
+    }
+  }
 }
 
 module.exports = bookingController
