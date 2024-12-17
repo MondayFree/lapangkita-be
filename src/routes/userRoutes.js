@@ -3,7 +3,9 @@ const userController = require('../controllers/userController');
 const auth = require('../middleware/auth');
 const authorizeRoles = require('../middleware/authorization');
 const ROLES = require('../constant/roles');
-const upload = require('../utils/multer')
+
+const upload = require('../utils/multer-cloudinary');
+// const upload = require('../utils/multer')
 
 const router = express.Router();
 

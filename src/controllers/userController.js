@@ -159,7 +159,8 @@ const userController = {
                 return ResponseAPI.notFound(res, "User doesn't exist")
             }
             if(req.file) {
-                uploadedImgUrl = await imageUpload(req.file)
+                // uploadedImgUrl = await imageUpload(req.file)
+                uploadedImgUrl = req.file.path;
                 newData.img_url = uploadedImgUrl
             }
             for(const prop in newData) {
